@@ -2,6 +2,8 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <thread>   // Required for sleep_for
+#include <chrono>   // Required for milliseconds
 #include <opencv2/core.hpp>
 #include <opencv2/video.hpp>
 #include <opencv2/imgproc.hpp>
@@ -18,7 +20,7 @@ void convert_to_ascii(const string& folderName, vector<Mat> &frames){
     fstream file;
 
     for (int num = 0; num < frames.size(); num++){
-        filePath = folderName + to_string(static_cast<long long>(num))+ ".txt";
+        filePath = folderName + to_string(static_cast<long long>(num)) + ".txt";
         file.open(filePath, ios_base::out);
         varFrame = frames[num];
         uchar value;
@@ -28,11 +30,10 @@ void convert_to_ascii(const string& folderName, vector<Mat> &frames){
                 value = varFrame.at<uchar>(row, col);
                 file << signs[value/29];
             }
+            file << "\n";
         }
         file.close();
     }
-
-    //cout << frame << endl;
 }
 
 void extract_frames(const string& filename, vector<Mat>& frames){
@@ -50,7 +51,7 @@ void extract_frames(const string& filename, vector<Mat>& frames){
         Mat done;
         Mat done2;
         cvtColor(frame, done, COLOR_BGR2GRAY);
-        resize(done, done2, Size(640, 360));
+        resize(done, done2, Size(160, 50));
         frames.push_back(done2);
     }
 
@@ -71,14 +72,36 @@ void save_frames(const string& foldername, vector<Mat>& frames){
     }
 }
 
-void display(const string & folderName){
+void display(const string &folderName){
+    string filePath;
+    ifstream file;
+    string line;
+
+    int frameNum = 0;
+    while(true){
+        filePath = folderName + to_string(frameNum) + ".txt";
+        file.open(filePath);
+
+        if (!file.is_open()) break;
+
+        cout << "\033[2J\033[1;1H";
+
+        while (getline(file, line)) {
+            cout << line << "\n";
+        }
+        file.close();
+
+        frameNum++;
+
+        this_thread::sleep_for(chrono::milliseconds(33));
+    }
 
 }
 
 int main() {
     vector<Mat> frames;
 
-    extract_frames("videoTest.mp4", frames);
+    extract_frames("videoTest2.mp4", frames);
 
     convert_to_ascii("ascii/", frames);
 
